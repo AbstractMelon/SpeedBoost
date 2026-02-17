@@ -3,9 +3,10 @@
 
   function notifyIfCanvasCourse() {
     const url = window.location.href;
-    if (url === lastNotifiedUrl) {
-      return;
-    }
+    // Uncomment to allow multiple notifications for the same course within a short time frame 
+    // if (url === lastNotifiedUrl) {
+    //   return;
+    // }
 
     const isCanvasCourseUrl = /https:\/\/canyongrove\.instructure\.com\/courses\/\d+/.test(url);
     if (!isCanvasCourseUrl) {

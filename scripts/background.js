@@ -32,6 +32,12 @@ async function getSettings() {
 }
 
 async function fetchCourses(email, bearerToken) {
+  // Try to use cached courses first (valid for 1 hour)
+  const cached = await chrome.storage.local.get(["courses", "coursesAt"]);
+  if (cached.courses && cached.coursesAt && Date.now() - cached.coursesAt < 3_600_000) {
+    return cached.courses;
+  }
+
   const response = await fetch(BOOST_API_COURSES_URL, {
     method: "POST",
     headers: {
@@ -45,7 +51,15 @@ async function fetchCourses(email, bearerToken) {
     throw new Error(`Courses request failed (${response.status})`);
   }
 
-  return response.json();
+  const courses = await response.json();
+
+  // Cache the new list
+  await chrome.storage.local.set({
+    courses,
+    coursesAt: Date.now()
+  });
+
+  return courses;
 }
 
 async function pingBoostCourse(courseName) {
