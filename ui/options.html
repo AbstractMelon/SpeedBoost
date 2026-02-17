@@ -71,11 +71,11 @@
   <body>
     <main class="card">
       <h1>SpeedBoost Settings</h1>
-      <p>Enter your Boost account email and Bearer token used for the Canvas courses API.</p>
+      <p>Enter your Bearer token used for the Canvas courses API. Email is auto-filled from the token.</p>
 
       <form id="settings-form">
         <label for="email">Email</label>
-        <input id="email" name="email" type="email" autocomplete="email" required />
+        <input id="email" name="email" type="email" autocomplete="email" />
 
         <label for="bearerToken">Bearer Token</label>
         <textarea id="bearerToken" name="bearerToken" required></textarea>

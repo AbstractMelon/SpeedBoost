@@ -1,6 +1,6 @@
 # SpeedBoost
 
-Browser extension for Chrome and Firefox that automatically pings Boost when you open a Canvas course URL.
+Browser extension for Chrome and Firefox that automatically logs attendance in Boost from Canvas activity.
 
 ## What it does
 
@@ -14,8 +14,18 @@ the extension will:
 2. Request your course list from:
    `https://boost.lifted-management.com/api/Canvas/courses/`
 3. Find the matching course name for that ID
-4. Send a GET request to:
-   `https://boost.lifted-management.com/courses?course=${courseName}`
+4. Send `POST https://boost.lifted-management.com/Attendance` with:
+   - `userId`
+   - `type: "participation"`
+   - `notes: "Viewed Course: {courseName}"`
+   - `submittedById`
+   - `attendanceDate: new Date()`
+
+It also logs attendance when a curriculum section is opened inside a course, sending:
+- `type: "participation"`
+- `notes: "Opened Curriculum: {curriculumName}"`
+
+Each course view is logged once per tab/course load, and each curriculum section is logged once per page load.
 
 This extension only runs on `https://canyongrove.instructure.com/courses/*`.
 
@@ -35,8 +45,17 @@ This extension only runs on `https://canyongrove.instructure.com/courses/*`.
 3. Select `manifest.json` in this project folder (`SpeedBoost`)
 
 ## Using the Extension
-   - your Bearer token for the Boost API
-7. Save
+
+Set the Bearer token in popup/options.
+
+Identity values are auto-derived from JWT claims:
+- `email` from `email`
+- `userId` from `appUserId`
+- `submittedById` from `appUserId`
+
+The UI shows email (read-only) and hides manual ID entry.
+
+Then open Canvas courses and curriculum sections normally; attendance requests are sent automatically.
 
 ## Popup features
 

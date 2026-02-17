@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SpeedBoost",
   "version": "1.0.0",
-  "description": "Automatically pings Boost when visiting Canvas course URLs.",
+  "description": "Automatically logs Boost attendance when viewing Canvas courses and opening curriculum sections.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
