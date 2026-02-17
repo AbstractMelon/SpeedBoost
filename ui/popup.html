@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpeedBoost</title>
+    <style>
+      body {
+        margin: 0;
+        width: 340px;
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        color: #111827;
+      }
+
+      .card {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+
+      .title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .title img {
+        width: 22px;
+        height: 22px;
+      }
+
+      .title h1 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      label {
+        display: block;
+        margin: 10px 0 6px;
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      textarea {
+        min-height: 64px;
+        resize: vertical;
+      }
+
+      button {
+        margin-top: 10px;
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 10px;
+        color: white;
+        background: #2563eb;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .status {
+        margin-top: 5px;
+        font-size: 12px;
+        background: #eef2ff;
+        border-radius: 8px;
+        padding: 8px;
+      }
+
+      .success {
+        color: #065f46;
+      }
+
+      .failure {
+        color: #991b1b;
+      }
+
+      #save-status {
+        min-height: 16px;
+        margin-top: 8px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="title">
+        <!-- <img src="../assets/icons/icon32.png" alt="SpeedBoost icon" /> -->
+        <h1>SpeedBoost</h1>
+      </div>
+
+      <form id="settings-form">
+        <label for="email">Email</label>
+        <input id="email" type="email" required />
+
+        <label for="bearerToken">Bearer token</label>
+        <textarea id="bearerToken" required></textarea>
+
+        <button type="submit">Save</button>
+        <div id="save-status" aria-live="polite"></div>
+      </form>
+
+      <div id="last-status" class="status">No attempts yet.</div>
+    </div>
+
+    <script src="../scripts/popup.js"></script>
+  </body>
+</html>

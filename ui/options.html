@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpeedBoost Settings</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: Arial, sans-serif;
+        color: #111827;
+        background: #f3f4f6;
+      }
+
+      .card {
+        max-width: 680px;
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+      }
+
+      p {
+        margin: 0 0 16px;
+      }
+
+      label {
+        display: block;
+        font-weight: 700;
+        margin: 14px 0 6px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 14px;
+      }
+
+      textarea {
+        min-height: 140px;
+        resize: vertical;
+      }
+
+      button {
+        margin-top: 16px;
+        background: #2563eb;
+        color: white;
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      #status {
+        margin-top: 10px;
+        min-height: 18px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>SpeedBoost Settings</h1>
+      <p>Enter your Boost account email and Bearer token used for the Canvas courses API.</p>
+
+      <form id="settings-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+
+        <label for="bearerToken">Bearer Token</label>
+        <textarea id="bearerToken" name="bearerToken" required></textarea>
+
+        <button type="submit">Save</button>
+        <div id="status" role="status" aria-live="polite"></div>
+      </form>
+    </main>
+
+    <script src="../scripts/options.js"></script>
+  </body>
+</html>
