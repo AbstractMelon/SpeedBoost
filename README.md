@@ -46,22 +46,15 @@ This extension only runs on `https://canyongrove.instructure.com/courses/*`.
 
 ## Using the Extension
 
-Set the Bearer token in popup/options.
+Open Boost in your browser while signed in; SpeedBoost auto-syncs the token
 
 Identity values are auto-derived from JWT claims:
 - `email` from `email`
 - `userId` from `appUserId`
 - `submittedById` from `appUserId`
 
-The UI shows email (read-only) and hides manual ID entry.
+When token sync succeeds, Boost shows an on-page SpeedBoost notification.
+
+The popup shows email only (read-only) so you can confirm it matched the active user.
 
 Then open Canvas courses and curriculum sections normally; attendance requests are sent automatically.
-
-## Popup features
-
-- Click the extension icon to open a small popup panel.
-- You can edit and save email/token there.
-- It shows the latest attempt status:
-   - success/failure
-   - timestamp
-   - course name/ID or error message

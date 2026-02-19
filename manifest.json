@@ -24,6 +24,11 @@
       "matches": ["https://canyongrove.instructure.com/courses/*"],
       "js": ["scripts/content.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://boost.lifted-management.com/*"],
+      "js": ["scripts/boost-token-sync.js"],
+      "run_at": "document_idle"
     }
   ],
   "options_page": "ui/options.html",
@@ -41,6 +46,10 @@
     {
       "resources": ["assets/icons/*.png"],
       "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["scripts/boost-page-hook.js"],
+      "matches": ["https://boost.lifted-management.com/*"]
     }
   ],
   "browser_specific_settings": {

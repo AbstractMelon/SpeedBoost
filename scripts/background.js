@@ -241,13 +241,75 @@ async function resolveMatchedCourse(email, bearerToken, courseId) {
   return courses.find((course) => Number(course?.courseId) === courseId) || null;
 }
 
+async function notifyTab(tabId, kind, message) {
+  if (typeof tabId !== "number") {
+    return;
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tabId, {
+      type: "speedboost-notify",
+      kind,
+      message
+    });
+  } catch {
+    // Ignore if content script isn't available on the tab.
+  }
+}
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   lastTriggerByTab.delete(tabId);
   lastCurriculumTriggerByTab.delete(tabId);
 });
 
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (!message || (message.type !== "canvas-course-visited" && message.type !== "canvas-curriculum-opened")) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message) {
+    return;
+  }
+
+  if (message.type === "boost-token-updated") {
+    const token = typeof message.token === "string" ? message.token.trim() : "";
+    const payload = decodeJwtPayload(token);
+
+    if (!token || !payload) {
+      return false;
+    }
+
+    const email = typeof payload.email === "string" ? payload.email.trim() : "";
+    const userId = toValidNumber(payload.appUserId);
+
+    if (!email || userId === null) {
+      return false;
+    }
+
+    chrome.storage.sync.set({
+      bearerToken: token,
+      email,
+      userId,
+      submittedById: userId
+    }).then(() => {
+      saveLastStatus({
+        ok: true,
+        at: Date.now(),
+        message: `Token synced: ${email}`
+      }).catch(() => {});
+
+      if (typeof sendResponse === "function") {
+        sendResponse({ ok: true, email });
+      }
+    }).catch((error) => {
+      if (typeof sendResponse === "function") {
+        sendResponse({
+          ok: false,
+          error: error instanceof Error ? error.message : "Failed to save token"
+        });
+      }
+    });
+
+    return true;
+  }
+
+  if (message.type !== "canvas-course-visited" && message.type !== "canvas-curriculum-opened") {
     return;
   }
 
@@ -271,6 +333,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     try {
       const { email, bearerToken, userId: settingsUserId, submittedById: settingsSubmittedById } = await getSettings();
       if (!email || !bearerToken) {
+        await notifyTab(tabId, "error", "SpeedBoost: attendance not sent (missing token)");
         await saveLastStatus({
           ok: false,
           at: Date.now(),
@@ -283,6 +346,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
       const courseName = matchedCourse?.name || `Course #${courseId}`;
 
       if (!matchedCourse && message.type === "canvas-course-visited") {
+        await notifyTab(tabId, "error", `SpeedBoost: attendance not sent (course ${courseId} not found)`);
         await saveLastStatus({
           ok: false,
           at: Date.now(),
@@ -300,6 +364,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
       );
 
       if (userId === null || submittedById === null) {
+        await notifyTab(tabId, "error", "SpeedBoost: attendance not sent (missing user id)");
         await saveLastStatus({
           ok: false,
           at: Date.now(),
@@ -321,6 +386,8 @@ chrome.runtime.onMessage.addListener((message, sender) => {
         notes
       });
 
+      await notifyTab(tabId, "success", `SpeedBoost: attendance sent (${notes})`);
+
       if (message.type === "canvas-course-visited") {
         markTriggered(tabId, courseId);
       } else {
@@ -336,6 +403,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
       });
     } catch (error) {
       console.error("SpeedBoost: failed to process Canvas course visit", error);
+      await notifyTab(tabId, "error", `SpeedBoost: attendance failed (${error instanceof Error ? error.message : "Unknown error"})`);
       await saveLastStatus({
         ok: false,
         at: Date.now(),
