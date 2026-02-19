@@ -31,7 +31,6 @@
       "run_at": "document_idle"
     }
   ],
-  "options_page": "ui/options.html",
   "action": {
     "default_title": "SpeedBoost",
     "default_popup": "ui/popup.html",
