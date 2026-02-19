@@ -1,7 +1,7 @@
 (function initSpeedBoostContentScript() {
   let lastNotifiedUrl = "";
 
-  function showToast(message, isError = false) {
+  function showToast(message, isError = false, timeout = 2600) {
     const existing = document.getElementById("speedboost-toast");
     if (existing) {
       existing.remove();
@@ -25,7 +25,7 @@
     document.body.appendChild(toast);
     setTimeout(() => {
       toast.remove();
-    }, 2600);
+    }, timeout);
   }
 
   chrome.runtime.onMessage.addListener((message) => {
@@ -38,7 +38,7 @@
       return;
     }
 
-    showToast(text, message.kind === "error");
+    showToast(text, message.kind === "error", message.timeout);
   });
 
   function getCurrentCourseUrl() {

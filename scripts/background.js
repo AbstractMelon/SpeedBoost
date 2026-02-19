@@ -210,7 +210,7 @@ async function resolveMatchedCourse(email, bearerToken, courseId) {
   return courses.find((course) => Number(course?.courseId) === courseId) || null;
 }
 
-async function notifyTab(tabId, kind, message) {
+async function notifyTab(tabId, kind, message, timeout = 2600) {
   if (typeof tabId !== "number") {
     return;
   }
@@ -219,7 +219,8 @@ async function notifyTab(tabId, kind, message) {
     await chrome.tabs.sendMessage(tabId, {
       type: "speedboost-notify",
       kind,
-      message
+      message,
+      timeout
     });
   } catch {
     // Ignore if content script isn't available on the tab.
@@ -295,11 +296,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       const { email, bearerToken, userId: settingsUserId, submittedById: settingsSubmittedById } = await getSettings();
       if (!email || !bearerToken) {
-        await notifyTab(tabId, "error", "SpeedBoost: attendance not sent (missing token)");
+        await notifyTab(tabId, "error", "SpeedBoost: Token is mising/expired, to log attendance, open Boost to auto-fetch a fresh token.", 4000);
         await saveLastStatus({
           ok: false,
           at: Date.now(),
-          message: "Missing email or bearer token"
+          message: "Token is mising/expired. Open Boost once to auto-fetch a fresh token."
         });
         return;
       }
