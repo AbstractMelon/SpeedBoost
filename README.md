@@ -10,7 +10,7 @@ When you visit a Canvas course URL such as:
 
 the extension will:
 
-1. Extract the Canvas course ID (eg`1022`)
+1. Extract the Canvas course ID (e.g., `1022`)
 2. Request your course list from:
    `https://boost.lifted-management.com/api/Canvas/courses/`
 3. Find the matching course name for that ID
