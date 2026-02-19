@@ -10,7 +10,7 @@ When you visit a Canvas course URL such as:
 
 the extension will:
 
-1. Extract the Canvas course ID (`1022`)
+1. Extract the Canvas course ID (eg`1022`)
 2. Request your course list from:
    `https://boost.lifted-management.com/api/Canvas/courses/`
 3. Find the matching course name for that ID
@@ -21,11 +21,7 @@ the extension will:
    - `submittedById`
    - `attendanceDate: new Date()`
 
-It also logs attendance when a curriculum section is opened inside a course, sending:
-- `type: "participation"`
-- `notes: "Opened Curriculum: {curriculumName}"`
-
-Each course view is logged once per tab/course load, and each curriculum section is logged once per page load.
+Each course view is logged once per tab/course load.
 
 This extension only runs on `https://canyongrove.instructure.com/courses/*`.
 
@@ -57,4 +53,8 @@ When token sync succeeds, Boost shows an on-page SpeedBoost notification.
 
 The popup shows email only (read-only) so you can confirm it matched the active user.
 
-Then open Canvas courses and curriculum sections normally; attendance requests are sent automatically.
+Then open Canvas courses normally; attendance requests are sent automatically.
+
+## Pitfalls
+
+Currently, the app requires you to have a valid boost token, and boosts token's expire every hour. This means that the user will have to log into boost around every hour while they are working on schoolwork. I could maybe add something down the line to maybe automaticlly log in, but that would take way too much time for something that could be solved easier. 
