@@ -79,47 +79,5 @@
   window.addEventListener("popstate", notifyIfCanvasCourse);
   window.addEventListener("hashchange", notifyIfCanvasCourse);
 
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) {
-      return;
-    }
-
-    const trigger = target.closest("button, [role='button'], summary, [aria-expanded], details");
-    if (!trigger) {
-      return;
-    }
-
-    queueMicrotask(() => {
-      const expanded = trigger.getAttribute("aria-expanded") === "true";
-      const openedDetails = trigger instanceof HTMLDetailsElement ? trigger.open : false;
-      if (expanded || openedDetails || trigger.matches("summary")) {
-        tryNotifyCurriculumOpened(trigger);
-      }
-    });
-  }, true);
-
-  const expansionObserver = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (!(mutation.target instanceof Element)) {
-        continue;
-      }
-
-      if (mutation.attributeName === "aria-expanded" && mutation.target.getAttribute("aria-expanded") === "true") {
-        tryNotifyCurriculumOpened(mutation.target);
-      }
-
-      if (mutation.attributeName === "open" && mutation.target instanceof HTMLDetailsElement && mutation.target.open) {
-        tryNotifyCurriculumOpened(mutation.target);
-      }
-    }
-  });
-
-  expansionObserver.observe(document.documentElement, {
-    attributes: true,
-    subtree: true,
-    attributeFilter: ["aria-expanded", "open"]
-  });
-
   notifyIfCanvasCourse();
 })();
