@@ -5,7 +5,6 @@ const BOOST_ATTENDANCE_URLS = [
 ];
 
 const lastTriggerByTab = new Map();
-const lastCurriculumTriggerByTab = new Map();
 
 async function saveLastStatus(status) {
   await chrome.storage.local.set({ lastStatus: status });
@@ -202,36 +201,6 @@ function markTriggered(tabId, courseId) {
   });
 }
 
-function shouldSkipCurriculum(tabId, courseId, curriculumKey) {
-  if (typeof tabId !== "number" || !curriculumKey) {
-    return false;
-  }
-
-  const previous = lastCurriculumTriggerByTab.get(tabId);
-  if (!previous || previous.courseId !== courseId) {
-    return false;
-  }
-
-  return previous.loggedCurriculums.has(curriculumKey);
-}
-
-function markCurriculumTriggered(tabId, courseId, curriculumKey) {
-  if (typeof tabId !== "number" || !curriculumKey) {
-    return;
-  }
-
-  let previous = lastCurriculumTriggerByTab.get(tabId);
-  if (!previous || previous.courseId !== courseId) {
-    previous = {
-      courseId,
-      loggedCurriculums: new Set()
-    };
-    lastCurriculumTriggerByTab.set(tabId, previous);
-  }
-
-  previous.loggedCurriculums.add(curriculumKey);
-}
-
 async function resolveMatchedCourse(email, bearerToken, courseId) {
   const courses = await fetchCourses(email, bearerToken);
   if (!Array.isArray(courses)) {
@@ -259,7 +228,6 @@ async function notifyTab(tabId, kind, message) {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   lastTriggerByTab.delete(tabId);
-  lastCurriculumTriggerByTab.delete(tabId);
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -309,7 +277,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.type !== "canvas-course-visited" && message.type !== "canvas-curriculum-opened") {
+  if (message.type !== "canvas-course-visited") {
     return;
   }
 
@@ -319,13 +287,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   const tabId = sender?.tab?.id;
-  if (message.type === "canvas-course-visited" && shouldSkipTab(tabId, courseId)) {
-    return;
-  }
-
-  const curriculumName = typeof message.curriculumName === "string" ? message.curriculumName.trim() : "";
-  const curriculumKey = curriculumName.toLowerCase();
-  if (message.type === "canvas-curriculum-opened" && shouldSkipCurriculum(tabId, courseId, curriculumKey)) {
+  if (shouldSkipTab(tabId, courseId)) {
     return;
   }
 
@@ -345,7 +307,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const matchedCourse = await resolveMatchedCourse(email, bearerToken, courseId);
       const courseName = matchedCourse?.name || `Course #${courseId}`;
 
-      if (!matchedCourse && message.type === "canvas-course-visited") {
+      if (!matchedCourse) {
         await notifyTab(tabId, "error", `SpeedBoost: attendance not sent (course ${courseId} not found)`);
         await saveLastStatus({
           ok: false,
@@ -375,9 +337,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
-      const notes = message.type === "canvas-course-visited"
-        ? `Viewed Course: ${courseName}`
-        : `Opened Curriculum: ${curriculumName || "Unknown Curriculum"}`;
+      const notes = `[SpeedBoost] Viewed Course: ${courseName}`;
 
       await postAttendance({
         bearerToken,
@@ -386,13 +346,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         notes
       });
 
-      await notifyTab(tabId, "success", `SpeedBoost: attendance sent (${notes})`);
+      await notifyTab(tabId, "success", `Attendance sent for ${courseName}`);
 
-      if (message.type === "canvas-course-visited") {
-        markTriggered(tabId, courseId);
-      } else {
-        markCurriculumTriggered(tabId, courseId, curriculumKey);
-      }
+      markTriggered(tabId, courseId);
 
       await saveLastStatus({
         ok: true,

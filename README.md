@@ -17,7 +17,7 @@ the extension will:
 4. Send `POST https://boost.lifted-management.com/Attendance` with:
    - `userId`
    - `type: "participation"`
-   - `notes: "Viewed Course: {courseName}"`
+   - `notes: "[SpeedBoost] Viewed Course: {courseName}"`
    - `submittedById`
    - `attendanceDate: new Date()`
 

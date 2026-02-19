@@ -1,6 +1,5 @@
 (function initSpeedBoostContentScript() {
   let lastNotifiedUrl = "";
-  const loggedCurriculumNames = new Set();
 
   function showToast(message, isError = false) {
     const existing = document.getElementById("speedboost-toast");
@@ -46,61 +45,6 @@
     return window.location.href;
   }
 
-  function normalizeCurriculumName(name) {
-    if (typeof name !== "string") {
-      return "";
-    }
-
-    return name.replace(/\s+/g, " ").trim();
-  }
-
-  function getCurriculumNameFromElement(element) {
-    if (!(element instanceof Element)) {
-      return "";
-    }
-
-    const withLabel = element.closest("[aria-label]");
-    if (withLabel?.getAttribute("aria-label")) {
-      return normalizeCurriculumName(withLabel.getAttribute("aria-label"));
-    }
-
-    const heading = element.closest("h1, h2, h3, h4, h5, h6");
-    if (heading?.textContent) {
-      return normalizeCurriculumName(heading.textContent);
-    }
-
-    const summary = element.closest("summary");
-    if (summary?.textContent) {
-      return normalizeCurriculumName(summary.textContent);
-    }
-
-    const button = element.closest("button, [role='button']");
-    if (button?.textContent) {
-      return normalizeCurriculumName(button.textContent);
-    }
-
-    return normalizeCurriculumName(element.textContent || "");
-  }
-
-  function tryNotifyCurriculumOpened(element) {
-    const curriculumName = getCurriculumNameFromElement(element);
-    if (!curriculumName) {
-      return;
-    }
-
-    const key = curriculumName.toLowerCase();
-    if (loggedCurriculumNames.has(key)) {
-      return;
-    }
-
-    loggedCurriculumNames.add(key);
-    chrome.runtime.sendMessage({
-      type: "canvas-curriculum-opened",
-      url: getCurrentCourseUrl(),
-      curriculumName
-    });
-  }
-
   function notifyIfCanvasCourse() {
     const url = getCurrentCourseUrl();
     // Uncomment to allow multiple notifications for the same course within a short time frame 
@@ -114,7 +58,6 @@
     }
 
     lastNotifiedUrl = url;
-    loggedCurriculumNames.clear();
     chrome.runtime.sendMessage({
       type: "canvas-course-visited",
       url
