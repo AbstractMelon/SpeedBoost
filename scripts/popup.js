@@ -44,7 +44,6 @@ async function loadData() {
   ]);
 
   emailInput.value = settings.email || "Not synced yet";
-  emailInput.readOnly = true;
   renderLastStatus(localData.lastStatus || null);
 }
 

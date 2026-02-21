@@ -1,6 +1,4 @@
 (function initSpeedBoostContentScript() {
-  let lastNotifiedUrl = "";
-
   function showToast(message, isError = false, timeout = 2600) {
     const existing = document.getElementById("speedboost-toast");
     if (existing) {
@@ -47,17 +45,11 @@
 
   function notifyIfCanvasCourse() {
     const url = getCurrentCourseUrl();
-    // Uncomment to allow multiple notifications for the same course within a short time frame 
-    // if (url === lastNotifiedUrl) {
-    //   return;
-    // }
-
     const isCanvasCourseUrl = /https:\/\/canyongrove\.instructure\.com\/courses\/\d+/.test(url);
     if (!isCanvasCourseUrl) {
       return;
     }
 
-    lastNotifiedUrl = url;
     chrome.runtime.sendMessage({
       type: "canvas-course-visited",
       url
