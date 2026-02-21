@@ -39,12 +39,8 @@
     showToast(text, message.kind === "error", message.timeout);
   });
 
-  function getCurrentCourseUrl() {
-    return window.location.href;
-  }
-
   function notifyIfCanvasCourse() {
-    const url = getCurrentCourseUrl();
+    const url = window.location.href;
     const isCanvasCourseUrl = /https:\/\/canyongrove\.instructure\.com\/courses\/\d+/.test(url);
     if (!isCanvasCourseUrl) {
       return;

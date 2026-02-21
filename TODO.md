@@ -1,0 +1,2 @@
+- Tell the user when they need to login
+- First time instructions

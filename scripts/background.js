@@ -1,8 +1,5 @@
 const BOOST_API_COURSES_URL = "https://boost.lifted-management.com/api/Canvas/courses/";
-const BOOST_ATTENDANCE_URLS = [
-  "https://boost.lifted-management.com/api/Attendance",
-  "https://boost.lifted-management.com/Attendance"
-];
+const BOOST_ATTENDANCE_URL = "https://boost.lifted-management.com/api/Attendance";
 
 const lastTriggerByTab = new Map();
 
@@ -50,39 +47,16 @@ function decodeJwtPayload(token) {
   }
 }
 
-function pickFirstNumber(...values) {
-  for (const value of values) {
-    const parsed = toValidNumber(value);
-    if (parsed !== null) {
-      return parsed;
-    }
-  }
-
-  return null;
-}
-
 async function getSettings() {
-  const data = await chrome.storage.sync.get(["bearerToken", "email", "userId", "submittedById"]);
+  const data = await chrome.storage.sync.get(["bearerToken", "email", "userId"]);
   const bearerToken = typeof data.bearerToken === "string" ? data.bearerToken.trim() : "";
   const jwtPayload = decodeJwtPayload(bearerToken);
 
-  const tokenEmail = typeof jwtPayload?.email === "string" ? jwtPayload.email.trim() : "";
-  const tokenUserId = toValidNumber(jwtPayload?.appUserId);
+  const email = (typeof jwtPayload?.email === "string" ? jwtPayload.email.trim() : "") ||
+                (typeof data.email === "string" ? data.email.trim() : "");
+  const userId = toValidNumber(jwtPayload?.appUserId) ?? toValidNumber(data.userId);
 
-  const storedEmail = typeof data.email === "string" ? data.email.trim() : "";
-  const storedUserId = toValidNumber(data.userId);
-  const storedSubmittedById = toValidNumber(data.submittedById);
-
-  const resolvedEmail = tokenEmail || storedEmail;
-  const resolvedUserId = tokenUserId ?? storedUserId;
-  const resolvedSubmittedById = tokenUserId ?? storedSubmittedById ?? resolvedUserId;
-
-  return {
-    email: resolvedEmail,
-    bearerToken,
-    userId: resolvedUserId,
-    submittedById: resolvedSubmittedById
-  };
+  return { email, bearerToken, userId };
 }
 
 async function fetchCourses(email, bearerToken) {
@@ -116,65 +90,30 @@ async function fetchCourses(email, bearerToken) {
   return courses;
 }
 
-function resolveUserIds(settings, matchedCourse) {
-  const matchedUserId = pickFirstNumber(
-    matchedCourse?.userId,
-    matchedCourse?.studentId,
-    matchedCourse?.learnerId,
-    matchedCourse?.student?.id,
-    matchedCourse?.user?.id
-  );
-  const matchedSubmittedById = pickFirstNumber(
-    matchedCourse?.submittedById,
-    matchedCourse?.submittedBy?.id,
-    matchedCourse?.user?.id,
-    matchedCourse?.instructorId
-  );
-
-  const userId = pickFirstNumber(settings.userId, matchedUserId, matchedSubmittedById);
-  const submittedById = pickFirstNumber(settings.submittedById, matchedSubmittedById, userId);
-
-  return {
-    userId,
-    submittedById
-  };
-}
-
-async function postAttendance({ bearerToken, userId, submittedById, notes }) {
+async function postAttendance({ bearerToken, userId, notes }) {
   const payload = {
     userId,
+    submittedById: userId,
     type: "participation",
     notes,
-    submittedById,
     attendanceDate: new Date().toISOString()
   };
 
-  let lastErrorStatus = 0;
+  const response = await fetch(BOOST_ATTENDANCE_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${bearerToken}`,
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
 
-  for (const endpoint of BOOST_ATTENDANCE_URLS) {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${bearerToken}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (response.ok) {
-      return;
-    }
-
-    lastErrorStatus = response.status;
-    if (response.status !== 404 && response.status !== 405) {
-      const responseText = await response.text().catch(() => "");
-      const detail = responseText ? `: ${responseText.slice(0, 180)}` : "";
-      throw new Error(`Attendance request failed (${response.status})${detail}`);
-    }
+  if (!response.ok) {
+    const responseText = await response.text().catch(() => "");
+    const detail = responseText ? `: ${responseText.slice(0, 180)}` : "";
+    throw new Error(`Attendance request failed (${response.status})${detail}`);
   }
-
-  throw new Error(`Attendance request failed (${lastErrorStatus || "unknown"})`);
 }
 
 function shouldSkipTab(tabId, courseId) {
@@ -251,12 +190,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return false;
     }
 
-    chrome.storage.sync.set({
-      bearerToken: token,
-      email,
-      userId,
-      submittedById: userId
-    }).then(() => {
+    chrome.storage.sync.set({ bearerToken: token, email, userId }).then(() => {
       saveLastStatus({
         ok: true,
         at: Date.now(),
@@ -294,13 +228,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   (async () => {
     try {
-      const { email, bearerToken, userId: settingsUserId, submittedById: settingsSubmittedById } = await getSettings();
+      const { email, bearerToken, userId } = await getSettings();
       if (!email || !bearerToken) {
-        await notifyTab(tabId, "error", "SpeedBoost: Token is mising/expired, to log attendance, open Boost to auto-fetch a fresh token.", 4000);
+        await notifyTab(tabId, "error", "SpeedBoost: Token is missing/expired. Open Boost to auto-fetch a fresh token.", 4000);
         await saveLastStatus({
           ok: false,
           at: Date.now(),
-          message: "Token is mising/expired. Open Boost once to auto-fetch a fresh token."
+          message: "Token is missing/expired. Open Boost once to auto-fetch a fresh token."
         });
         return;
       }
@@ -318,34 +252,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
-      const { userId, submittedById } = resolveUserIds(
-        {
-          userId: settingsUserId,
-          submittedById: settingsSubmittedById
-        },
-        matchedCourse
-      );
-
-      if (userId === null || submittedById === null) {
-        await notifyTab(tabId, "error", "SpeedBoost: attendance not sent (missing user id)");
+      if (userId === null) {
+        await notifyTab(tabId, "error", "SpeedBoost: attendance not sent (missing user ID)");
         await saveLastStatus({
           ok: false,
           at: Date.now(),
           courseId,
           courseName,
-          message: "Missing userId or submittedById in settings/course data"
+          message: "Missing userId in settings - re-open Boost to re-sync token."
         });
         return;
       }
 
       const notes = `[SpeedBoost] Viewed Course: ${courseName}`;
 
-      await postAttendance({
-        bearerToken,
-        userId,
-        submittedById,
-        notes
-      });
+      await postAttendance({ bearerToken, userId, notes });
 
       await notifyTab(tabId, "success", `Attendance sent for ${courseName}`);
 
